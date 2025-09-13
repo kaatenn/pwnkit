@@ -26,6 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::UninstallCommand => {
             todo!()
-        }
+        },
+        Commands::TemplateCommand { .. } => todo!()
     }
 }

@@ -6,6 +6,8 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+    #[arg(long)]
+    pub allow_wsl: bool,
 }
 
 #[derive(Subcommand)]
@@ -23,6 +25,11 @@ pub enum Commands {
         list: bool,
         #[arg(short, long)]
         competition: String,
+        #[arg(short, long)]
+        name: String,
+    },
+    #[command(name = "t")]
+    TemplateCommand {
         #[arg(short, long)]
         name: String,
     },
