@@ -1,0 +1,31 @@
+use clap::Parser;
+use pwncli::commands::{Cli, Commands};
+use pwncli::config::Config;
+use pwncli::data::competition::Competition;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+    let mut config = Config::load();
+
+    match cli.command {
+        Commands::CompCommand { list, name} => {
+            if list {
+                println!("Competition list:");
+                for comp in &config.competitions {
+                    println!("- {}", comp);
+                }
+                Ok(())
+            }
+            else {
+                config.add_competitions(Competition::new(name));
+                config.save()
+            }
+        }
+        Commands::QuesCommand { .. } => {
+            todo!()
+        }
+        Commands::UninstallCommand => {
+            todo!()
+        }
+    }
+}
