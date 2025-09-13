@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "pwnc")]
+#[command(name = "pk")]
 #[command(about = "A powerful pwn command line tool")]
 pub struct Cli {
     #[command(subcommand)]

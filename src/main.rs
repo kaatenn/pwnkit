@@ -1,7 +1,7 @@
 use clap::Parser;
-use pwncli::commands::{Cli, Commands};
-use pwncli::config::Config;
-use pwncli::data::competition::Competition;
+use pwnkit::commands::{Cli, Commands};
+use pwnkit::config::Config;
+use pwnkit::data::competition::Competition;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();

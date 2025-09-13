@@ -13,7 +13,7 @@ impl Config {
     pub fn config_path() -> PathBuf {
         dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join(".pwncli/config.json")
+            .join(".pwnkit/config.json")
     }
 
     pub fn load() -> Self {
