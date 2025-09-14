@@ -21,19 +21,29 @@ impl Competition {
     }
 
     pub fn from_row(name: String, date: String) -> Self {
-        Self {
-            name,
-            date,
-        }
+        Self { name, date }
     }
 
-    pub fn add_competitions(self: Self) -> Result<(), PkError> {
+    pub(crate) fn list_competitions() -> Result<(), Box<dyn std::error::Error>> {
+        let conn = Database::init_db()?;
+        let mut stmt = conn.prepare("SELECT name FROM competitions ORDER BY name")?;
+        let rows = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
+
+        println!("Competition list:");
+        for row in rows {
+            println!("- {}", row?);
+        }
+        Ok(())
+    }
+
+    pub fn add_competitions(self: &Self) -> Result<(), PkError> {
         let conn = Database::init_db()?;
         let mut stmt = conn.prepare("SELECT COUNT(*) FROM competitions WHERE name = (?1)")?;
         let count: i64 = stmt.query_row([&self.name], |row| row.get(0))?;
 
         if count > 0 {
             self.deal_repeat_comp(&conn)?;
+            println!("Add competition {}", self.name);
         } else {
             let comp_dir = self.competition_dir();
             conn.execute(
@@ -91,6 +101,18 @@ impl Competition {
                 Ok(())
             }
         }
+    }
+
+    pub fn remove_competition(self: Self) -> Result<(), PkError> {
+        let conn = Database::init_db()?;
+
+        let comp_dir = std::path::PathBuf::from(".pwnkit").join(&self.name);
+        conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])?;
+        if comp_dir.exists() {
+            std::fs::remove_dir_all(&comp_dir)?;
+        }
+
+        Ok(())
     }
 }
 

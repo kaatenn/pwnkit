@@ -1,12 +1,18 @@
 use crate::data::competition::Competition;
-use crate::database::Database;
 use crate::error::PkError;
 use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum CompAction {
     List,
-    Add { name: String },
+    Add {
+        #[arg(short, long)]
+        name: String,
+    },
+    Remove {
+        #[arg(short, long)]
+        name: String,
+    }
 }
 
 impl CompAction {
@@ -15,6 +21,9 @@ impl CompAction {
             CompAction::List => Self::list_competitions()?,
             CompAction::Add { name } => {
                 Self::add_competitions(Competition::new(name.clone()))?;
+            },
+            CompAction::Remove { name } => {
+                Self::remove_competitions(name.clone())?;
             }
         };
         Ok(())
@@ -22,18 +31,19 @@ impl CompAction {
 
     fn add_competitions(comp: Competition) -> Result<(), PkError> {
         comp.add_competitions()?;
+
         Ok(())
     }
 
     fn list_competitions() -> Result<(), Box<dyn std::error::Error>> {
-        let conn = Database::init_db()?;
-        let mut stmt = conn.prepare("SELECT name FROM competitions ORDER BY name")?;
-        let rows = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
+        Competition::list_competitions()?;
+        Ok(())
+    }
 
-        println!("Competition list:");
-        for row in rows {
-            println!("- {}", row?);
-        }
+    fn remove_competitions(name: String) -> Result<(), PkError> {
+        let comp = Competition::new(name.clone());
+        comp.remove_competition()?;
+        println!("Removed competition {}", name);
         Ok(())
     }
 }

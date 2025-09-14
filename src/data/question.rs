@@ -1,6 +1,7 @@
 use crate::database::Database;
 use crate::error::PkError;
 use colored::Colorize;
+use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
 use std::io::Write;
 use std::path::PathBuf;
@@ -50,6 +51,7 @@ impl Question {
             self.deal_repeat_question()?;
         } else {
             self.create_new_question()?;
+            println!("Added question {}", self.name);
         }
 
         Ok(())
@@ -71,8 +73,6 @@ impl Question {
         )?;
 
         std::fs::create_dir_all(&question_dir)?;
-
-        println!("Added question {}", self.name);
         Ok(())
     }
 
@@ -126,6 +126,48 @@ impl Question {
         let dir = self.get_question_path();
         if dir.exists() {
             std::fs::remove_dir_all(dir)?;
+        }
+        println!("Removed question {}", self.name);
+        Ok(())
+    }
+
+    pub fn list_questions(competition: &Option<String>, tags: &Option<Vec<String>>) -> Result<(), PkError> {
+        let mut sql = "SELECT name, competition, tags FROM questions WHERE 1=1 ".to_string();
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(competition) = competition {
+            sql.push_str(" AND competition = ? ");
+            params.push(competition.clone());
+        }
+
+        if let Some(tags) = tags {
+            for (i, tag) in tags.iter().enumerate() {
+                if i == 0 {
+                    sql.push_str(" AND (tag LIKE ?");
+                } else {
+                    sql.push_str(" OR tag LIKE ? ");
+                }
+                params.push(format!("%{}%", tag));
+            }
+            if !tags.is_empty() {
+                sql.push(')');
+            }
+        }
+
+        let conn = Database::init_db()?;
+        let mut stmt = conn.prepare(&sql)?;
+        let param_refs: Vec<&dyn ToSql> = params.iter().map(|i| i as &dyn ToSql).collect();
+        let rows = stmt.query_map(&param_refs[..], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })?;
+        println!("Questions:");
+        for row in rows {
+            let (name, comp, tags) = row?;
+            println!("- {} ({}) [{}]", name, comp, tags);
         }
         Ok(())
     }
