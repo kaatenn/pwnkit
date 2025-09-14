@@ -14,12 +14,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for comp in &config.competitions {
                     println!("- {}", comp);
                 }
-                Ok(())
             }
-            else {
+            else if let Some(name) = name {
                 config.add_competitions(Competition::new(name));
-                config.save()
-            }
+                config.save()?;
+            };
+            Ok(())
         }
         Commands::QuesCommand { .. } => {
             todo!()

@@ -14,19 +14,19 @@ pub struct Cli {
 pub enum Commands {
     #[command(name = "c")]
     CompCommand {
-        #[arg(short, long)]
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
         list: bool,
         #[arg(short, long)]
-        name: String,
+        name: Option<String>,
     },
     #[command(name = "q")]
     QuesCommand {
-        #[arg(short, long)]
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
         list: bool,
         #[arg(short, long)]
-        competition: String,
+        competition: Option<String>,
         #[arg(short, long)]
-        name: String,
+        name: Option<String>,
     },
     #[command(name = "t")]
     TemplateCommand {

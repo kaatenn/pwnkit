@@ -1,8 +1,7 @@
-use clap::{Parser, Subcommand};
+use crate::data::competition::Competition;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use crate::data::competition::Competition;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
@@ -11,9 +10,10 @@ pub struct Config {
 
 impl Config {
     pub fn config_path() -> PathBuf {
-        dirs::home_dir()
+        /* dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join(".pwnkit/config.json")
+            .join(".pwnkit/config.json") */
+        PathBuf::from(".pwnkit/config.json")
     }
 
     pub fn load() -> Self {
