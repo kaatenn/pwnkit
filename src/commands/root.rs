@@ -1,5 +1,6 @@
 use crate::commands::comp_action::CompAction;
 use clap::{Parser, Subcommand};
+use crate::commands::ques_action::QuesAction;
 
 #[derive(Parser)]
 #[command(name = "pk")]
@@ -20,6 +21,8 @@ pub enum Commands {
     },
     #[command(name = "q")]
     QuesCommand {
+        #[command(subcommand)]
+        action: QuesAction,
         #[arg(short, long, action = clap::ArgAction::SetTrue)]
         list: bool,
         #[arg(short, long)]

@@ -1,9 +1,11 @@
 use chrono::Local;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::string::ToString;
+use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Default)]
+
 pub struct Competition {
+    pub id: Option<String>,
     pub name: String,
     pub date: String,
 }
@@ -11,8 +13,17 @@ pub struct Competition {
 impl Competition {
     pub fn new(name: String) -> Self {
         Self {
+            id: Some(Uuid::new_v4().to_string()),
             name,
             date: Local::now().to_rfc3339(),
+        }
+    }
+
+    pub fn from_row(id: String, name: String, date: String) -> Self {
+        Self {
+            id: Some(id),
+            name,
+            date,
         }
     }
 }
