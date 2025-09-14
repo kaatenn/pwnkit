@@ -22,23 +22,34 @@ impl Database {
         }
 
         let conn = Connection::open(Self::database_path())?;
+
+        Self::init_competition_table(&conn)?;
+        Self::init_question_table(&conn)?;
+
+        Ok(conn)
+    }
+
+    fn init_competition_table(conn: &Connection) -> Result<(), PkError> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS competitions (
                 name TEXT PRIMARY KEY,
                 date TEXT NOT NULL)",
             [],
         )?;
+        Ok(())
+    }
 
+    fn init_question_table(conn: &Connection) -> Result<(), PkError> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS questions (
-              name TEXT NOT NULL,
-              competition TEXT NOT NULL,
-              tags TEXT,
-              PRIMARY KEY (name, competition),
-              FOREIGN KEY (competition) REFERENCES competitions(name) ON DELETE CASCADE
-          )",
+                name TEXT NOT NULL,
+                competition TEXT NOT NULL,
+                tags TEXT,
+                PRIMARY KEY (name, competition),
+                FOREIGN KEY (competition) REFERENCES competitions(name) ON DELETE CASCADE
+            )",
             [],
         )?;
-        Ok(conn)
+        Ok(())
     }
 }
