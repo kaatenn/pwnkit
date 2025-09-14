@@ -1,10 +1,7 @@
-use crate::data::competition::Competition;
 use crate::error::PkError;
-use colored::Colorize;
 use rusqlite::Connection;
-use std::io::Write;
+use std::fs;
 use std::path::PathBuf;
-use std::{fs, io};
 
 #[derive(Default)]
 pub struct Database;
@@ -32,8 +29,17 @@ impl Database {
                 date TEXT NOT NULL)",
             [],
         )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS questions (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              competition TEXT NOT NULL,
+              tags TEXT,
+              FOREIGN KEY (competition) REFERENCES competitions(name)
+          )",
+            [],
+        )?;
         Ok(conn)
     }
-
-    
 }

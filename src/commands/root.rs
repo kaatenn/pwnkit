@@ -1,6 +1,6 @@
 use crate::commands::comp_action::CompAction;
-use clap::{Parser, Subcommand};
 use crate::commands::ques_action::QuesAction;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "pk")]
@@ -23,12 +23,6 @@ pub enum Commands {
     QuesCommand {
         #[command(subcommand)]
         action: QuesAction,
-        #[arg(short, long, action = clap::ArgAction::SetTrue)]
-        list: bool,
-        #[arg(short, long)]
-        competition: Option<String>,
-        #[arg(short, long)]
-        name: Option<String>,
     },
     #[command(name = "t")]
     TemplateCommand {
@@ -45,8 +39,8 @@ impl Commands {
             Commands::CompCommand {action} => {
                 action.execute()?
             }
-            Commands::QuesCommand { .. } => {
-                todo!()
+            Commands::QuesCommand { action } => {
+                action.execute()?
             }
             Commands::UninstallCommand => {
                 todo!()
