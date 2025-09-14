@@ -4,10 +4,8 @@ use colored::Colorize;
 use std::fmt::{Display, Formatter};
 use std::io::Write;
 use std::path::PathBuf;
-use uuid::Uuid;
 
 pub struct Question {
-    pub id: Option<String>,
     pub name: String,
     pub competition: String,
     pub tags: Option<Vec<String>>,
@@ -16,17 +14,15 @@ pub struct Question {
 impl Question {
     pub fn new(name: String, competition: String, tags: Option<Vec<String>>) -> Self {
         Self {
-            id: Some(Uuid::new_v4().to_string()),
             name,
             competition,
             tags,
         }
     }
 
-    pub fn from_row(id: String, name: String, competition: String, tags: Option<String>) -> Self {
+    pub fn from_row(name: String, competition: String, tags: Option<String>) -> Self {
         let tags_vec = tags.map(|t| t.split(',').map(|s| s.trim().to_string()).collect());
         Self {
-            id: Some(id),
             name,
             competition,
             tags: tags_vec,
@@ -66,9 +62,8 @@ impl Question {
         let tags_str = self.tags_str();
 
         conn.execute(
-            "INSERT OR IGNORE INTO questions (id, name, competition, tags) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO questions (name, competition, tags) VALUES (?1, ?2, ?3)",
             &[
-                &self.id,
                 &Some(self.name.clone()),
                 &Some(self.competition.clone()),
                 &Some(tags_str),
@@ -136,9 +131,14 @@ impl Question {
     }
 }
 
-
 impl Display for Question {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "- {} ({}) [{}]", self.name, self.competition, self.tags_str())
+        write!(
+            f,
+            "- {} ({}) [{}]",
+            self.name,
+            self.competition,
+            self.tags_str()
+        )
     }
 }

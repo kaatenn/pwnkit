@@ -6,11 +6,8 @@ use rusqlite::Connection;
 use std::fmt::{Display, Formatter};
 use std::io;
 use std::io::Write;
-use std::string::ToString;
-use uuid::Uuid;
 
 pub struct Competition {
-    pub id: Option<String>,
     pub name: String,
     pub date: String,
 }
@@ -18,15 +15,13 @@ pub struct Competition {
 impl Competition {
     pub fn new(name: String) -> Self {
         Self {
-            id: Some(Uuid::new_v4().to_string()),
             name,
             date: Local::now().to_rfc3339(),
         }
     }
 
-    pub fn from_row(id: String, name: String, date: String) -> Self {
+    pub fn from_row(name: String, date: String) -> Self {
         Self {
-            id: Some(id),
             name,
             date,
         }
@@ -42,8 +37,8 @@ impl Competition {
         } else {
             let comp_dir = self.competition_dir();
             conn.execute(
-                "INSERT OR IGNORE INTO competitions (id, name, date) VALUES (?1, ?2, ?3)",
-                [self.id.as_ref(), Some(&self.name), Some(&self.date)],
+                "INSERT OR IGNORE INTO competitions (name, date) VALUES (?1, ?2)",
+                [Some(&self.name), Some(&self.date)],
             )?;
             std::fs::create_dir_all(&comp_dir)?;
             println!("Added competition {}", self.name);
@@ -73,10 +68,11 @@ impl Competition {
 
         match input.trim().to_lowercase().as_str() {
             "y" | "yes" => {
-                conn.execute("DELETE FROM questions WHERE competition = (?1)", [&self.name])?;
+                conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])?;
+
                 conn.execute(
-                    "UPDATE competitions SET date = (?1) WHERE name = (?2)",
-                    [Some(&self.date), Some(&self.name)],
+                    "INSERT INTO competitions (name, date) VALUES (?1, ?2)",
+                    [&self.name, &self.date],
                 )?;
                 println!(
                     "{} {}",

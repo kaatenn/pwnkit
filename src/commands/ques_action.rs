@@ -94,7 +94,6 @@ impl QuesAction {
     fn add_question(name: &String, competition: &String, tags: &Option<Vec<String>>) -> Result<(), PkError> {
         let question = Question::new(name.clone(), competition.clone(), tags.clone());
         question.add_question()?;
-        println!("Added question {}", name);
         Ok(())
     }
 

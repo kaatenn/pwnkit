@@ -24,19 +24,18 @@ impl Database {
         let conn = Connection::open(Self::database_path())?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS competitions (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
+                name TEXT PRIMARY KEY,
                 date TEXT NOT NULL)",
             [],
         )?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS questions (
-              id TEXT PRIMARY KEY,
               name TEXT NOT NULL,
               competition TEXT NOT NULL,
               tags TEXT,
-              FOREIGN KEY (competition) REFERENCES competitions(name)
+              PRIMARY KEY (name, competition),
+              FOREIGN KEY (competition) REFERENCES competitions(name) ON DELETE CASCADE
           )",
             [],
         )?;
