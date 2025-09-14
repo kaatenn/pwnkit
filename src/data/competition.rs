@@ -40,13 +40,19 @@ impl Competition {
         if count > 0 {
             self.deal_repeat_comp(&conn)?;
         } else {
+            let comp_dir = self.competition_dir();
             conn.execute(
                 "INSERT OR IGNORE INTO competitions (id, name, date) VALUES (?1, ?2, ?3)",
                 [self.id.as_ref(), Some(&self.name), Some(&self.date)],
             )?;
+            std::fs::create_dir_all(&comp_dir)?;
             println!("Added competition {}", self.name);
         }
         Ok(())
+    }
+
+    fn competition_dir(self: &Self) -> std::path::PathBuf {
+        std::path::PathBuf::from(".pwnkit").join(&self.name)
     }
 
     fn deal_repeat_comp(self: &Self, conn: &Connection) -> Result<(), PkError> {
@@ -63,9 +69,11 @@ impl Competition {
 
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
+        let comp_dir = self.competition_dir();
 
         match input.trim().to_lowercase().as_str() {
             "y" | "yes" => {
+                conn.execute("DELETE FROM questions WHERE competition = (?1)", [&self.name])?;
                 conn.execute(
                     "UPDATE competitions SET date = (?1) WHERE name = (?2)",
                     [Some(&self.date), Some(&self.name)],
@@ -75,7 +83,10 @@ impl Competition {
                     "Updated competition".green(),
                     self.name.bright_white()
                 );
-                todo!("添加题目删除逻辑");
+                if comp_dir.exists() {
+                    std::fs::remove_dir_all(&comp_dir)?;
+                }
+                std::fs::create_dir_all(&comp_dir)?;
                 Ok(())
             }
 
