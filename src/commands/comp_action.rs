@@ -1,7 +1,6 @@
 use crate::config::Database;
 use crate::data::competition::Competition;
 use clap::Subcommand;
-use serde_json::error::Category::Data;
 
 #[derive(Subcommand)]
 pub enum CompAction {

@@ -1,5 +1,4 @@
 use crate::commands::comp_action::CompAction;
-use crate::config::Database;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]

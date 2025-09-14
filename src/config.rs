@@ -1,9 +1,9 @@
 use crate::data::competition::Competition;
+use crate::error::ConfigError;
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use rusqlite::Connection;
-use crate::error::ConfigError;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Database {
