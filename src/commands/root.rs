@@ -1,6 +1,7 @@
 use crate::commands::comp_action::CompAction;
 use crate::commands::ques_action::QuesAction;
 use clap::{Parser, Subcommand};
+use crate::commands::temp_action::TempAction;
 
 #[derive(Parser)]
 #[command(name = "pk")]
@@ -8,8 +9,6 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
-    #[arg(long)]
-    pub allow_wsl: bool,
 }
 
 #[derive(Subcommand)]
@@ -26,6 +25,8 @@ pub enum Commands {
     },
     #[command(name = "t")]
     TemplateCommand {
+        #[command(subcommand)]
+        action: TempAction,
         #[arg(short, long)]
         name: String,
     },

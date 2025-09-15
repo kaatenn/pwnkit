@@ -24,7 +24,7 @@ impl Competition {
         Self { name, date }
     }
 
-    pub(crate) fn list_competitions() -> Result<(), Box<dyn std::error::Error>> {
+    pub fn list_competitions() -> Result<(), Box<dyn std::error::Error>> {
         let conn = Database::init_db()?;
         let mut stmt = conn.prepare("SELECT name FROM competitions ORDER BY name")?;
         let rows = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
