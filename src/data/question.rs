@@ -1,5 +1,6 @@
 use crate::database::Database;
-use crate::error::PkError;
+use crate::error::{DatabaseError, PkError};
+use crate::utils;
 use colored::Colorize;
 use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
@@ -42,10 +43,13 @@ impl Question {
     }
 
     pub fn add_question(self: Self) -> Result<(), PkError> {
-        let conn = Database::init_db()?;
+        let conn = utils::connect()?;
         let mut stmt = conn
-            .prepare("SELECT COUNT(*) FROM questions WHERE name = (?1) AND competition = (?2)")?;
-        let count: i64 = stmt.query_row(&[&self.name, &self.competition], |row| row.get(0))?;
+            .prepare("SELECT COUNT(*) FROM questions WHERE name = (?1) AND competition = (?2)")
+            .map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
+        let count: i64 = stmt
+            .query_row(&[&self.name, &self.competition], |row| row.get(0))
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
         if count > 0 {
             self.deal_repeat_question()?;
@@ -58,7 +62,7 @@ impl Question {
     }
 
     fn create_new_question(self: &Self) -> Result<(), PkError> {
-        let conn = Database::init_db()?;
+        let conn = utils::connect()?;
 
         let question_dir = self.get_question_path();
         let tags_str = self.tags_str();
@@ -70,7 +74,8 @@ impl Question {
                 &Some(self.competition.clone()),
                 &Some(tags_str),
             ],
-        )?;
+        )
+        .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
         std::fs::create_dir_all(&question_dir)?;
         Ok(())
@@ -122,7 +127,8 @@ impl Question {
         conn.execute(
             "DELETE FROM questions WHERE name = (?1) AND competition = (?2)",
             &[&self.name, &self.competition],
-        )?;
+        )
+        .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         let dir = self.get_question_path();
         if dir.exists() {
             std::fs::remove_dir_all(dir)?;
@@ -131,7 +137,10 @@ impl Question {
         Ok(())
     }
 
-    pub fn list_questions(competition: &Option<String>, tags: &Option<Vec<String>>) -> Result<(), PkError> {
+    pub fn list_questions(
+        competition: &Option<String>,
+        tags: &Option<Vec<String>>,
+    ) -> Result<(), PkError> {
         let mut sql = "SELECT name, competition, tags FROM questions WHERE 1=1 ".to_string();
         let mut params: Vec<String> = Vec::new();
 
@@ -155,18 +164,22 @@ impl Question {
         }
 
         let conn = Database::init_db()?;
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn
+            .prepare(&sql)
+            .map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
         let param_refs: Vec<&dyn ToSql> = params.iter().map(|i| i as &dyn ToSql).collect();
-        let rows = stmt.query_map(&param_refs[..], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-            ))
-        })?;
+        let rows = stmt
+            .query_map(&param_refs[..], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         println!("Questions:");
         for row in rows {
-            let (name, comp, tags) = row?;
+            let (name, comp, tags) = row.map_err(|e| PkError::FmtError(e.to_string()))?;
             println!("- {} ({}) [{}]", name, comp, tags);
         }
         Ok(())

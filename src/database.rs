@@ -1,4 +1,4 @@
-use crate::error::PkError;
+use crate::error::{DatabaseError, PkError};
 use rusqlite::Connection;
 use std::fs;
 use std::path::PathBuf;
@@ -21,7 +21,7 @@ impl Database {
             fs::create_dir_all(parent)?;
         }
 
-        let conn = Connection::open(Self::database_path())?;
+        let conn = Connection::open(Self::database_path()).map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
 
         Self::init_competition_table(&conn)?;
         Self::init_question_table(&conn)?;
@@ -29,17 +29,17 @@ impl Database {
         Ok(conn)
     }
 
-    fn init_competition_table(conn: &Connection) -> Result<(), PkError> {
+    fn init_competition_table(conn: &Connection) -> Result<(), DatabaseError> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS competitions (
                 name TEXT PRIMARY KEY,
                 date TEXT NOT NULL)",
             [],
-        )?;
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         Ok(())
     }
 
-    fn init_question_table(conn: &Connection) -> Result<(), PkError> {
+    fn init_question_table(conn: &Connection) -> Result<(), DatabaseError> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS questions (
                 name TEXT NOT NULL,
@@ -49,7 +49,7 @@ impl Database {
                 FOREIGN KEY (competition) REFERENCES competitions(name) ON DELETE CASCADE
             )",
             [],
-        )?;
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         Ok(())
     }
 }

@@ -1,5 +1,5 @@
 use crate::database::Database;
-use crate::error::PkError;
+use crate::error::{DatabaseError, PkError};
 use chrono::Local;
 use colored::Colorize;
 use rusqlite::Connection;
@@ -38,8 +38,12 @@ impl Competition {
 
     pub fn add_competitions(self: &Self) -> Result<(), PkError> {
         let conn = Database::init_db()?;
-        let mut stmt = conn.prepare("SELECT COUNT(*) FROM competitions WHERE name = (?1)")?;
-        let count: i64 = stmt.query_row([&self.name], |row| row.get(0))?;
+        let mut stmt = conn
+            .prepare("SELECT COUNT(*) FROM competitions WHERE name = (?1)")
+            .map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
+        let count: i64 = stmt
+            .query_row([&self.name], |row| row.get(0))
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
         if count > 0 {
             self.deal_repeat_comp(&conn)?;
@@ -49,7 +53,8 @@ impl Competition {
             conn.execute(
                 "INSERT OR IGNORE INTO competitions (name, date) VALUES (?1, ?2)",
                 [Some(&self.name), Some(&self.date)],
-            )?;
+            )
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
             std::fs::create_dir_all(&comp_dir)?;
             println!("Added competition {}", self.name);
         }
@@ -78,12 +83,14 @@ impl Competition {
 
         match input.trim().to_lowercase().as_str() {
             "y" | "yes" => {
-                conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])?;
+                conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])
+                    .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
                 conn.execute(
                     "INSERT INTO competitions (name, date) VALUES (?1, ?2)",
                     [&self.name, &self.date],
-                )?;
+                )
+                .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
                 println!(
                     "{} {}",
                     "Updated competition".green(),
@@ -107,7 +114,8 @@ impl Competition {
         let conn = Database::init_db()?;
 
         let comp_dir = std::path::PathBuf::from(".pwnkit").join(&self.name);
-        conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])?;
+        conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         if comp_dir.exists() {
             std::fs::remove_dir_all(&comp_dir)?;
         }
