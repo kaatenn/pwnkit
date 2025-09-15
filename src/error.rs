@@ -10,6 +10,9 @@ pub enum PkError {
     
     #[error("fmt error: {0}")]
     FmtError(String),
+    
+    #[error("Config error: {0}")]
+    ConfigError(String),
 }
 
 #[derive(Debug, Error)]

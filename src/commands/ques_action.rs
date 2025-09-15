@@ -11,6 +11,8 @@ pub enum QuesAction {
         tags: Option<Vec<String>>,
     },
     Add {
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
+        from_wsl: bool,
         #[arg(short, long)]
         name: String,
         #[arg(short, long)]
@@ -33,8 +35,8 @@ impl QuesAction {
                 Self::list_questions(competition, tags)?;
                 Ok(())
             }
-            QuesAction::Add { name, competition, tags } => {
-                Self::add_question(name, competition, tags)?;
+            QuesAction::Add { from_wsl, name, competition, tags } => {
+                Self::add_question(from_wsl, name, competition, tags)?;
                 Ok(())
             },
             QuesAction::Remove { name, competition } => {
@@ -52,9 +54,11 @@ impl QuesAction {
         Ok(())
     }
 
-    fn add_question(name: &String, competition: &String, tags: &Option<Vec<String>>) -> Result<(), PkError> {
+    fn add_question(from_wsl: &bool, name: &String, competition: &String, tags: &Option<Vec<String>>) -> Result<(), PkError> {
         let question = Question::new(name.clone(), competition.clone(), tags.clone());
-        question.add_question()?;
+
+        question.add_question(*from_wsl)?;
+
         Ok(())
     }
 

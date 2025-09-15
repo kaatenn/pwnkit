@@ -1,4 +1,5 @@
 use crate::database::Database;
+use crate::error::PkError::ConfigError;
 use crate::error::{DatabaseError, PkError};
 use crate::utils;
 use colored::Colorize;
@@ -42,7 +43,7 @@ impl Question {
             .join(self.name.clone())
     }
 
-    pub fn add_question(self: Self) -> Result<(), PkError> {
+    pub fn add_question(self: &Self, from_wsl: bool) -> Result<(), PkError> {
         let conn = utils::connect()?;
         let mut stmt = conn
             .prepare("SELECT COUNT(*) FROM questions WHERE name = (?1) AND competition = (?2)")
@@ -52,16 +53,16 @@ impl Question {
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
         if count > 0 {
-            self.deal_repeat_question()?;
+            self.deal_repeat_question(from_wsl)?;
         } else {
-            self.create_new_question()?;
+            self.create_new_question(from_wsl)?;
             println!("Added question {}", self.name);
         }
 
         Ok(())
     }
 
-    fn create_new_question(self: &Self) -> Result<(), PkError> {
+    fn create_new_question(self: &Self, from_wsl: bool) -> Result<(), PkError> {
         let conn = utils::connect()?;
 
         let question_dir = self.get_question_path();
@@ -75,9 +76,12 @@ impl Question {
                 &Some(tags_str),
             ],
         )
-        .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
         std::fs::create_dir_all(&question_dir)?;
+        if from_wsl {
+            self.copy_from_windows_downloads()?;
+        }
         Ok(())
     }
 
@@ -86,7 +90,7 @@ impl Question {
         tags_str
     }
 
-    fn deal_repeat_question(self: &Self) -> Result<(), PkError> {
+    fn deal_repeat_question(self: &Self, from_wsl: bool) -> Result<(), PkError> {
         eprintln!("{}", "WARNING: Question already exists!".yellow().bold());
         eprintln!(
             "   Question '{}' in competition '{}' was previously added.",
@@ -106,7 +110,7 @@ impl Question {
             "y" | "yes" => {
                 self.remove_ques()?;
 
-                self.create_new_question()?;
+                self.create_new_question(from_wsl)?;
                 println!(
                     "{} {}",
                     " Overwritten question:".green(),
@@ -128,7 +132,7 @@ impl Question {
             "DELETE FROM questions WHERE name = (?1) AND competition = (?2)",
             &[&self.name, &self.competition],
         )
-        .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
         let dir = self.get_question_path();
         if dir.exists() {
             std::fs::remove_dir_all(dir)?;
@@ -183,6 +187,52 @@ impl Question {
             println!("- {} ({}) [{}]", name, comp, tags);
         }
         Ok(())
+    }
+
+    pub fn copy_from_windows_downloads(self: &Self) -> Result<(), PkError> {
+        let downloads_path = Self::get_windows_downloads_path()?;
+
+        let first_file = std::fs::read_dir(&downloads_path)?
+            .filter_map(|entry| entry.ok())
+            .find(|entry| entry.file_type().map(|ft| ft.is_file()).unwrap_or(false));
+
+        if let Some(file_entry) = first_file {
+            let source_path = file_entry.path();
+            let question_dir = self.get_question_path();
+            let target_path = question_dir.join("pwn");
+            std::fs::copy(&source_path, &target_path)?;
+
+            println!(
+                "{} '{}' to '{}'",
+                "Copied file from Windows Downloads:".green(),
+                source_path.display(),
+                target_path.display()
+            );
+            std::fs::remove_file(&source_path)?;
+        } else {
+            return Err(ConfigError(
+                "No files found in Downloads folder".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn get_windows_downloads_path() -> Result<PathBuf, PkError> {
+        if let Some(username) = Database::get_config("windows_username")? {
+            // let path = std::path::Path::new("/mnt/c/Users")
+            let path = std::path::Path::new("C:/Users")
+                .join(username)
+                .join("Downloads");
+            if path.exists() {
+                return Ok(path);
+            }
+        }
+
+        Err(ConfigError(
+            "Cannot determine Windows Downloads path. Please set correct 'windows_username' in config."
+                .red()
+                .to_string(),
+        ))
     }
 }
 
