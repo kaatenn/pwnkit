@@ -1,7 +1,7 @@
 use crate::commands::comp_action::CompAction;
 use crate::commands::ques_action::QuesAction;
 use clap::{Parser, Subcommand};
-use crate::commands::temp_action::TempAction;
+use crate::commands::template_action::TemplateAction;
 
 #[derive(Parser)]
 #[command(name = "pk")]
@@ -26,7 +26,7 @@ pub enum Commands {
     #[command(name = "t")]
     TemplateCommand {
         #[command(subcommand)]
-        action: TempAction,
+        action: TemplateAction,
         #[arg(short, long)]
         name: String,
     },

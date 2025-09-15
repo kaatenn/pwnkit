@@ -1,7 +1,7 @@
 use clap::Subcommand;
 
 #[derive(Subcommand)]
-pub enum TempAction {
+pub enum TemplateAction {
     List,
     Add {
         #[arg(short, long)]
