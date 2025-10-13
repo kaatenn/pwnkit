@@ -1,7 +1,7 @@
 use crate::commands::comp_action::CompAction;
 use crate::commands::ques_action::QuesAction;
-use clap::{Parser, Subcommand};
 use crate::commands::template_action::TemplateAction;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "pk")]

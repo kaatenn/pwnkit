@@ -1,7 +1,7 @@
-use rusqlite::Connection;
 use crate::database::Database;
-use crate::error::DatabaseError;
+use crate::error::PkError;
+use rusqlite::Connection;
 
-pub fn connect() -> Result<Connection, DatabaseError> {
-    Ok(Database::init_db().map_err(|e| DatabaseError::ConnectionError(e.to_string()))?)
+pub fn connect() -> Result<Connection, PkError> {
+    Ok(Database::init_db()?)
 }

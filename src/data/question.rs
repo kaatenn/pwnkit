@@ -1,6 +1,6 @@
 use crate::database::Database;
 use crate::error::PkError::ConfigError;
-use crate::error::{DatabaseError, PkError};
+use crate::error::PkError;
 use crate::utils;
 use colored::Colorize;
 use rusqlite::ToSql;
@@ -46,11 +46,9 @@ impl Question {
     pub fn add_question(self: &Self, from_wsl: bool) -> Result<(), PkError> {
         let conn = utils::connect()?;
         let mut stmt = conn
-            .prepare("SELECT COUNT(*) FROM questions WHERE name = (?1) AND competition = (?2)")
-            .map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
+            .prepare("SELECT COUNT(*) FROM questions WHERE name = (?1) AND competition = (?2)")?;
         let count: i64 = stmt
-            .query_row(&[&self.name, &self.competition], |row| row.get(0))
-            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+            .query_row(&[&self.name, &self.competition], |row| row.get(0))?;
 
         if count > 0 {
             self.deal_repeat_question(from_wsl)?;
@@ -75,8 +73,7 @@ impl Question {
                 &Some(self.competition.clone()),
                 &Some(tags_str),
             ],
-        )
-            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+        )?;
 
         std::fs::create_dir_all(&question_dir)?;
         if from_wsl {
@@ -131,8 +128,7 @@ impl Question {
         conn.execute(
             "DELETE FROM questions WHERE name = (?1) AND competition = (?2)",
             &[&self.name, &self.competition],
-        )
-            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+        )?;
         let dir = self.get_question_path();
         if dir.exists() {
             std::fs::remove_dir_all(dir)?;
@@ -169,8 +165,7 @@ impl Question {
 
         let conn = Database::init_db()?;
         let mut stmt = conn
-            .prepare(&sql)
-            .map_err(|e| DatabaseError::SqliteError(e.to_string()))?;
+            .prepare(&sql)?;
         let param_refs: Vec<&dyn ToSql> = params.iter().map(|i| i as &dyn ToSql).collect();
         let rows = stmt
             .query_map(&param_refs[..], |row| {
@@ -179,8 +174,7 @@ impl Question {
                     row.get::<_, String>(1)?,
                     row.get::<_, String>(2)?,
                 ))
-            })
-            .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+            })?;
         println!("Questions:");
         for row in rows {
             let (name, comp, tags) = row.map_err(|e| PkError::FmtError(e.to_string()))?;
@@ -221,7 +215,7 @@ impl Question {
         if let Some(username) = Database::get_config("windows_username")? {
             // let path = std::path::Path::new("/mnt/c/Users")
             let path = std::path::Path::new("C:/Users")
-                .join(username)
+                .join("administrators")
                 .join("Downloads");
             if path.exists() {
                 return Ok(path);

@@ -35,7 +35,7 @@ impl CompAction {
         Ok(())
     }
 
-    fn list_competitions() -> Result<(), Box<dyn std::error::Error>> {
+    fn list_competitions() -> Result<(), PkError> {
         Competition::list_competitions()?;
         Ok(())
     }

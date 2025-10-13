@@ -1,3 +1,4 @@
+use rusqlite::Error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -6,23 +7,11 @@ pub enum PkError {
     IoError(#[from] std::io::Error),
 
     #[error("Database error: {0}")]
-    DatabaseError(#[from] DatabaseError),
+    DatabaseError(#[from] Error),
     
     #[error("fmt error: {0}")]
     FmtError(String),
     
     #[error("Config error: {0}")]
     ConfigError(String),
-}
-
-#[derive(Debug, Error)]
-pub enum DatabaseError {
-    #[error("Database connection error: {0}")]
-    ConnectionError(String),
-
-    #[error("Query execution error: {0}")]
-    QueryError(String),
-
-    #[error("SQLite error: {0}")]
-    SqliteError(String),
 }
