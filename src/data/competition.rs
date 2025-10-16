@@ -1,3 +1,4 @@
+use crate::config;
 use crate::database::Database;
 use crate::error::PkError;
 use chrono::Local;
@@ -59,7 +60,7 @@ impl Competition {
     }
 
     fn competition_dir(self: &Self) -> std::path::PathBuf {
-        std::path::PathBuf::from(".pwnkit").join(&self.name)
+        config::root().join(&self.name)
     }
 
     fn deal_repeat_comp(self: &Self, conn: &Connection) -> Result<(), PkError> {
@@ -108,12 +109,28 @@ impl Competition {
     pub fn remove_competition(self: Self) -> Result<(), PkError> {
         let conn = Database::init_db()?;
 
-        let comp_dir = std::path::PathBuf::from(".pwnkit").join(&self.name);
+        let comp_dir = config::root().join(&self.name);
         conn.execute("DELETE FROM competitions WHERE name = (?1)", [&self.name])?;
         if comp_dir.exists() {
             std::fs::remove_dir_all(&comp_dir)?;
         }
 
+        Ok(())
+    }
+
+    pub fn remove_all() -> Result<(), PkError> {
+        let conn = Database::init_db()?;
+        let mut stmt = conn.prepare("SELECT name FROM competitions ORDER BY name")?;
+        let rows = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
+        for name in rows {
+            if let Ok(name) = name {
+                conn.execute("DELETE FROM competitions WHERE name = ?1", [name.clone()])?;
+                let comp_dir = config::root().join(&name);
+                if comp_dir.exists() {
+                    std::fs::remove_dir_all(&comp_dir)?;
+                }
+            }
+        }
         Ok(())
     }
 }

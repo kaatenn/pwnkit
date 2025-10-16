@@ -19,7 +19,7 @@ pub enum TemplateAction {
 }
 
 impl TemplateAction {
-    fn execute(&self) -> Result<(), PkError> {
+    pub fn execute(&self) -> Result<(), PkError> {
         match self {
             TemplateAction::List => {
                 Self::list_templates()?;

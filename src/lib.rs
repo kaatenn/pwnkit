@@ -3,3 +3,4 @@ pub mod database;
 pub mod data;
 pub mod error;
 pub mod utils;
+pub mod config;

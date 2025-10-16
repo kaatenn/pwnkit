@@ -2,6 +2,9 @@ use crate::commands::comp_action::CompAction;
 use crate::commands::ques_action::QuesAction;
 use crate::commands::template_action::TemplateAction;
 use clap::{Parser, Subcommand};
+use crate::data::competition::Competition;
+use crate::error::PkError;
+use crate::config;
 
 #[derive(Parser)]
 #[command(name = "pk")]
@@ -27,11 +30,9 @@ pub enum Commands {
     TemplateCommand {
         #[command(subcommand)]
         action: TemplateAction,
-        #[arg(short, long)]
-        name: String,
     },
-    #[command(name = "uninstall")]
-    UninstallCommand,
+    #[command(name = "clear")]
+    ClearCommand,
 }
 
 impl Commands {
@@ -43,10 +44,27 @@ impl Commands {
             Commands::QuesCommand { action } => {
                 action.execute()?
             }
-            Commands::UninstallCommand => {
-                todo!()
+            Commands::ClearCommand => {
+                Self::clear()?
             }
-            Commands::TemplateCommand { .. } => todo!(),
+            Commands::TemplateCommand { action} => {
+                action.execute()?
+            },
+        }
+        Ok(())
+    }
+
+    fn clear() -> Result<(), PkError> {
+        println!("Do you want to clear all user data?(Y/n)");
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input)?;
+        match input.trim().to_lowercase().as_str() {
+            "y" | "yes" => {
+                // Competition::remove_all()?;
+                let data_root = config::root();
+                std::fs::remove_dir_all(&data_root)?;
+            }
+            _ => {}
         }
         Ok(())
     }

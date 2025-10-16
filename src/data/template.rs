@@ -1,3 +1,4 @@
+use crate::config;
 use crate::database::Database;
 use crate::error::PkError;
 use colored::Colorize;
@@ -16,7 +17,7 @@ impl Template {
     }
 
     pub fn get_path(name: String) -> PathBuf {
-        PathBuf::from(".pwnkit").join(name + &String::from(".py"))
+        config::root().join(format!("{}.py", name))
     }
     
     pub fn list_templates() -> Result<(), PkError> {
@@ -70,7 +71,7 @@ impl Template {
     fn handle_duplicate_template(
         conn: &Connection,
         name: &str,
-        src: &PathBuf,
+        src: &Path,
     ) -> Result<(), PkError> {
         eprintln!("{}", "WARNING: Template already exists!".yellow().bold());
         eprintln!(

@@ -1,3 +1,4 @@
+use crate::config;
 use crate::database::Database;
 use crate::error::PkError::ConfigError;
 use crate::error::PkError;
@@ -33,12 +34,7 @@ impl Question {
     }
 
     pub fn get_question_path(self: &Self) -> PathBuf {
-        // dirs::home_dir()
-        //     .unwrap_or_else(|| std::path::PathBuf::from("."))
-        //     .join(".pwnkit")
-        //     .join(competition)
-        //     .join(name)
-        PathBuf::from(".pwnkit")
+        config::root()
             .join(self.competition.clone())
             .join(self.name.clone())
     }
@@ -184,7 +180,7 @@ impl Question {
     }
 
     pub fn copy_from_windows_downloads(self: &Self) -> Result<(), PkError> {
-        let downloads_path = Self::get_windows_downloads_path()?;
+        let downloads_path = config::windows_downloads_path()?;
 
         let first_file = std::fs::read_dir(&downloads_path)?
             .filter_map(|entry| entry.ok())
@@ -209,24 +205,6 @@ impl Question {
             ));
         }
         Ok(())
-    }
-
-    fn get_windows_downloads_path() -> Result<PathBuf, PkError> {
-        if let Some(username) = Database::get_config("windows_username")? {
-            // let path = std::path::Path::new("/mnt/c/Users")
-            let path = std::path::Path::new("C:/Users")
-                .join("administrators")
-                .join("Downloads");
-            if path.exists() {
-                return Ok(path);
-            }
-        }
-
-        Err(ConfigError(
-            "Cannot determine Windows Downloads path. Please set correct 'windows_username' in config."
-                .red()
-                .to_string(),
-        ))
     }
 }
 

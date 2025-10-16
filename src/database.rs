@@ -1,3 +1,4 @@
+use crate::config;
 use crate::error::PkError;
 use rusqlite::Connection;
 use std::fs;
@@ -8,10 +9,7 @@ pub struct Database;
 
 impl Database {
     pub fn database_path() -> PathBuf {
-        /* dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".pwnkit/config.json") */
-        PathBuf::from(".pwnkit/pwnkit.db")
+        config::root().join("pwnkit.db")
     }
 
     pub fn init_db() -> Result<Connection, PkError> {
@@ -57,17 +55,9 @@ impl Database {
     fn init_template_table(conn: &Connection) -> Result<(), PkError> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS templates (\
-            name TEXT PRIMARY KEY",
+            name TEXT PRIMARY KEY)",
             []
         )?;
         Ok(())
-    }
-
-    pub fn get_config(key: &str) -> Result<Option<String>, PkError> {
-        todo!()
-    }
-
-    pub fn set_config(key: &str, value: &str) -> Result<(), PkError> {
-        todo!()
     }
 }
