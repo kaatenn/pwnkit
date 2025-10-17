@@ -1,5 +1,6 @@
 use crate::data::question::Question;
 use crate::error::PkError;
+use crate::utils;
 use clap::Subcommand;
 
 #[derive(Subcommand)]
@@ -26,6 +27,12 @@ pub enum QuesAction {
         #[arg(short, long)]
         competition: String,
     },
+    Cd {
+        #[arg(short, long)]
+        name: String,
+        #[arg(short, long)]
+        competition: String,
+    },
 }
 
 impl QuesAction {
@@ -41,6 +48,10 @@ impl QuesAction {
             },
             QuesAction::Remove { name, competition } => {
                 Self::remove_question(name, competition)?;
+                Ok(())
+            }
+            QuesAction::Cd { name, competition } => {
+                Self::cd(name, competition)?;
                 Ok(())
             }
         }
@@ -65,6 +76,13 @@ impl QuesAction {
     fn remove_question(name: &String, competition: &String) -> Result<(), PkError> {
         let question = Question::new(name.clone(), competition.clone(), None);
         question.remove_ques()?;
+        Ok(())
+    }
+
+    fn cd(name: &String, competition: &String) -> Result<(), PkError> {
+        let q = Question::new(name.clone(), competition.clone(), None);
+        let dir = q.get_question_path();
+        utils::cd_into(&dir)?;
         Ok(())
     }
 }

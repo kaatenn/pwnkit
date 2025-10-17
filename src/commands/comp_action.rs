@@ -1,4 +1,6 @@
+use crate::config;
 use crate::data::competition::Competition;
+use crate::utils;
 use crate::error::PkError;
 use clap::Subcommand;
 
@@ -10,6 +12,10 @@ pub enum CompAction {
         name: String,
     },
     Remove {
+        #[arg(short, long)]
+        name: String,
+    },
+    Cd {
         #[arg(short, long)]
         name: String,
     }
@@ -24,6 +30,9 @@ impl CompAction {
             },
             CompAction::Remove { name } => {
                 Self::remove_competitions(name.clone())?;
+            },
+            CompAction::Cd { name } => {
+                Self::cd(name.clone())?;
             }
         };
         Ok(())
@@ -44,6 +53,19 @@ impl CompAction {
         let comp = Competition::new(name.clone());
         comp.remove_competition()?;
         println!("Removed competition {}", name);
+        Ok(())
+    }
+
+    fn cd(name: String) -> Result<(), PkError> {
+        let dir = config::root().join(&name);
+        if !dir.exists() {
+            return Err(PkError::ConfigError(format!(
+                "Competition '{}' directory not found: {}",
+                name,
+                dir.display()
+            )));
+        }
+        utils::cd_into(&dir)?;
         Ok(())
     }
 }
